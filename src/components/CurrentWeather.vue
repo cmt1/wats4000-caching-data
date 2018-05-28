@@ -19,84 +19,93 @@
 </template>
 
 <script>
-import {API} from '@/common/api';
-import WeatherSummary from '@/components/WeatherSummary';
-import WeatherData from '@/components/WeatherData';
-import CubeSpinner from '@/components/CubeSpinner';
-import MessageContainer from '@/components/MessageContainer';
+    import {
+        API
+    } from '@/common/api';
+    import WeatherSummary from '@/components/WeatherSummary';
+    import WeatherData from '@/components/WeatherData';
+    import CubeSpinner from '@/components/CubeSpinner';
+    import MessageContainer from '@/components/MessageContainer';
 
-export default {
-  name: 'CurrentWeather',
-  components: {
-    'weather-summary': WeatherSummary,
-    'weather-data': WeatherData,
-    'load-spinner': CubeSpinner,
-    'message-container': MessageContainer
-  },
-  data () {
-    return {
-      weatherData: null,
-      messages: [],
-      query: '',
-      showLoading: false
+    export default {
+        name: 'CurrentWeather',
+        components: {
+            'weather-summary': WeatherSummary,
+            'weather-data': WeatherData,
+            'load-spinner': CubeSpinner,
+            'message-container': MessageContainer
+        },
+        data() {
+            return {
+                weatherData: null,
+                messages: [],
+                query: '',
+                showLoading: false
+            }
+        },
+        created() {
+            this.showLoading = true;
+
+            let cacheLabel = 'currentWeather_' + this.$route.params.cityId;
+
+            let cacheExpiry = 15 * 60 * 1000;
+
+            if (this.$ls.get(cacheLabel)) {
+                console.log('Cached value detected.');
+                this.weatherData = this.$ls.get(cacheLabel);
+                this.showLoading = false;
+            } else {
+                console.log('No cache detected. Making API request.');
+                API.get('weather', {
+                        params: {
+                            id: this.$route.params.cityId
+                        }
+                    })
+                    .then(response => {
+                        this.$ls.set(cacheLabel, response.data, cacheExpiry);
+                        this.showLoading = false;
+                        this.weatherData = response.data;
+                    })
+                    .catch(error => {
+                        this.showLoading = false;
+                        this.messages.push({
+                            type: 'error',
+                            text: error.message
+                        });
+                    });
+            }
+        }
     }
-  },
-  created () {
-    this.showLoading = true;
-    // TODO: Cache these API results using the City ID as the label
 
-    // TODO: Create a cacheLabel value
-
-    // TODO: Create a cacheExpiry value set to 15 minutes in milliseconds
-
-    // TODO: Use a conditional to check if the API query has been cached
-    // If so, use that cached data
-    // If not, make the API call and cache the data with the cacheLabel and cacheExpiry defined above
-
-    API.get('weather', {
-      params: {
-          id: this.$route.params.cityId
-      }
-    })
-    .then(response => {
-      this.showLoading = false;
-      this.weatherData = response.data;
-    })
-    .catch(error => {
-      this.showLoading = false;
-      this.messages.push({
-        type: 'error',
-        text: error.message
-      });
-    });
-  }
-}
 </script>
 
 <style scoped>
-.errors li {
-  color: red;
-  border: solid red 1px;
-  padding: 5px;
-}
-h1, h2 {
-  font-weight: normal;
-}
+    .errors li {
+        color: red;
+        border: solid red 1px;
+        padding: 5px;
+    }
 
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  width: 300px;
-  min-height: 300px;
-  border: solid 1px #e8e8e8;
-  padding: 10px;
-}
-a {
-  color: #42b983;
-}
+    h1,
+    h2 {
+        font-weight: normal;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        display: inline-block;
+        width: 300px;
+        min-height: 300px;
+        border: solid 1px #e8e8e8;
+        padding: 10px;
+    }
+
+    a {
+        color: #42b983;
+    }
+
 </style>
-
-
